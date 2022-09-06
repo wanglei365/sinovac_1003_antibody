@@ -1,0 +1,188 @@
+/* Take cohort 1 for example */
+/* Create a database for cohort 1*/
+data cohort_1;
+input Subject_ID$ Cohort$ Dose_group$ Age_group$ Age Gender$ Titre_0 Titre_1 Titre_2 Titre_3_P Titre_4_P Titre_3_O Titre_4_O GMFR1 GMFR2 GMFR3 GMFR4P GMFR4O GMFR4P_4O;
+GTitre_0=log(Titre_0);	
+GTitre_1=log(Titre_1);	
+GTitre_2=log(Titre_2);	
+GTitre_3_P=log(Titre_3_P); 
+GTitre_4_P=log(Titre_4_P);	
+GTitre_3_O=log(Titre_3_O);	
+GTitre_4_O=log(Titre_4_O);
+GGMFR4P=log(GMFR4P);	
+GGMFR4O=log(GMFR4O);
+cards; 
+source data
+；
+run;
+/* immunogenicity analysis for prototype strain. GMT,GMFR,95%CI,t test.*/
+proc ttest data=cohort_1 dist=lognormal;
+var Titre_0 Titre_1	Titre_2	Titre_3_P Titre_4_P GMFR1 GMFR2 GMFR3 GMFR4P;
+class dose_group;
+run;
+/* immunogenicity analysis for Omicron strain. GMT, GMFR, 95%CI, t test.*/
+proc ttest data=cohort_1 dist=lognormal;
+var Titre_3_O Titre_4_O GMFR4O;
+class dose_group;
+run;
+/*analysis of the GMTs against prototype and Omicron strain*/
+proc ttest data=cohort_1 dist=lognormal;
+var Titre_4_P Titre_4_O GMFR4P_4O;
+class dose_group;
+run;
+
+/*exploratory analysis by age group for Omicron strain*/
+data cohort_1_dose1;
+set cohort_1;
+if dose_group=1;
+run;
+proc anova data=cohort_1_dose1;
+class age_group;
+model GTitre_4_O=age_group;
+means age_group/hovtest snk dunnett;
+run;
+proc anova data=cohort_1_dose1;
+class age_group;
+model GGMFR4O=age_group;
+means age_group/hovtest snk dunnett;
+run;
+
+data cohort_1_dose2;
+set cohort_1;
+if dose_group=2;
+run;
+proc anova data=cohort_1_dose2;
+class age_group;
+model GTitre_4_O=age_group;
+means age_group/hovtest snk dunnett;
+run;
+proc anova data=cohort_1_dose2;
+class age_group;
+model GGMFR4O=age_group;
+means age_group/hovtest snk dunnett;
+run;
+
+/*Further analysis of the GMTs against prototype and Omicron strain by age group 1*/
+data cohort_1_age1_dose1;
+set cohort_1;
+if age_group=1 and dose_group=1;
+run;
+proc ttest data=cohort_1_age1_dose1 dist=lognormal;
+var Titre_4_P Titre_4_O GMFR4P GMFR4O GMFR4P_4O;
+run;
+data cohort_1_age1_dose2;
+set cohort_1;
+if age_group=1 and dose_group=2;
+run;
+proc ttest data=cohort_1_age1_dose2 dist=lognormal;
+var Titre_4_P Titre_4_O GMFR4P GMFR4O GMFR4P_4O;
+run;
+
+/*Further analysis of the GMTs against prototype and Omicron strain by age group 2*/
+data cohort_1_age2_dose1;
+set cohort_1;
+if age_group=2 and dose_group=1;
+run;
+proc ttest data=cohort_1_age2_dose1 dist=lognormal;
+var Titre_4_P Titre_4_O GMFR4P GMFR4O GMFR4P_4O;
+run;
+data cohort_1_age2_dose2;
+set cohort_1;
+if age_group=2 and dose_group=2;
+run;
+proc ttest data=cohort_1_age2_dose2 dist=lognormal;
+var Titre_4_P Titre_4_O GMFR4P GMFR4O GMFR4P_4O;
+run;
+
+/*Further analysis of the GMTs against prototype and Omicron strain by age group 3*/
+data cohort_1_age3_dose1;
+set cohort_1;
+if age_group=3 and dose_group=1;
+run;
+proc ttest data=cohort_1_age3_dose1 dist=lognormal;
+var Titre_4_P Titre_4_O GMFR4P GMFR4O GMFR4P_4O;
+run;
+data cohort_1_age3_dose2;
+set cohort_1;
+if age_group=3 and dose_group=2;
+run;
+proc ttest data=cohort_1_age3_dose2 dist=lognormal;
+var Titre_4_P Titre_4_O GMFR4P GMFR4O GMFR4P_4O;
+run;
+
+/* take a example for Pearson χ² test or Fisher's exact test to analyze categorical outcomes*/
+data seropositivity1;
+do dose1=1 to 2;
+   do dose2=1 to 2;
+   input f@@;
+   output;
+   end;
+end;
+cards;
+19	66
+8	77
+;
+run;
+proc freq data=seropositivity1;
+weight f;
+tables dose1*dose2/riskdiff chisq expected exact;
+run;
+
+data seropositivity2;
+input age_group outcome f;
+cards;
+1 1 20
+1 0 0
+2 1 32
+2 0 1
+3 1 24
+3 0 6
+;
+run;
+proc freq data=seropositivity2;
+weight f;
+tables age_group*outcome/chisq nocol nopercent;
+exact fisher;
+run;
+
+data a;
+do p=1 to 2;
+input w@@;
+output;
+end;
+cards;
+20 0
+;
+run;
+proc freq data=a;
+weight w/zeros;
+table p/binomial;
+run;
+
+data b;
+do p=1 to 2;
+input w@@;
+output;
+end;
+cards;
+32 1
+;
+run;
+proc freq data=b;
+weight w/zeros;
+table p/binomial;
+run;
+
+data c;
+do p=1 to 2;
+input w@@;
+output;
+end;
+cards;
+24 6
+;
+run;
+proc freq data=c;
+weight w/zeros;
+table p/binomial;
+run;
